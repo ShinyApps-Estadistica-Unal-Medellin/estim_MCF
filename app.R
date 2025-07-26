@@ -2,7 +2,7 @@
 if(!require(pacman)) install.packages("pacman")
 if(!require(devtools)) install.packages("devtools")
 if(!require(SMRD)) devtools::install_github("Auburngrads/SMRD")
-pacman::p_load("shiny","rintrojs","gt","SMRD","readxl")#,"utils","readxl","glue","gtExtras"
+pacman::p_load("shiny","rintrojs","gt","SMRD","readxl")
 
 # CARGA DE BASES PRECARGADAS (.RData)
 carpeta <- "datos"
@@ -35,38 +35,45 @@ ui <- fluidPage(
       uiOutput("data_ui1"),
       
       hr(),
-      h4("Columnas del Dataset"),
+      h4("Variables de la base de datos:"),
       uiOutput("col_id1") %>%
-        tagAppendAttributes(`data-step` = 2, `data-intro` = "Selecciona la columna que identifica a cada individuo."),
+        tagAppendAttributes(`data-step` = 2, `data-intro` = "Selecciona la variable que identifica a cada equipo o sistema."),
       uiOutput("col_time1") %>%
-        tagAppendAttributes(`data-step` = 3, `data-intro` = "Selecciona la columna de tiempo."),
+        tagAppendAttributes(`data-step` = 3, `data-intro` = "Selecciona la variable de tiempo a falla o censura."),
       uiOutput("col_event1") %>%
-        tagAppendAttributes(`data-step` = 4, `data-intro` = "Selecciona la columna de la censura.")
+        tagAppendAttributes(`data-step` = 4, `data-intro` = "Selecciona la variable indicadora de falla o censura."),
+      h4("Autores:"),
+      tags$ul(
+        tags$li(tags$a(href="mailto:jaldanam@unal.edu.co", "Juan F. Aldana-Mejía")),
+        tags$li(tags$a(href="mailto:mcjarami@unal.edu.co", "Mario C. Jaramillo-Elorza")),
+        tags$li(tags$a(href="mailto:cmlopera@unal.edu.co", "Carlos M. Lopera-Gómez"))
+      ),
+      h4("Correspondencia:"),
+      tags$ul(
+        tags$li(tags$a(href="mailto:mcjarami@unal.edu.co", "Mario C. Jaramillo-Elorza"))
+      )
     ),
     
     mainPanel(
       tabsetPanel(
         tabPanel("Resumen", 
                  verbatimTextOutput("summary_text") %>%
-                   tagAppendAttributes(`data-step` = 5, `data-intro` = "En la pestaña resumen, podras visualizar un resumen 
-                                       estadístico del conjunto de datos convertido al formato RDU, incluyendo información como 
-                                       número de recurrencias, tiempo mínimo de las recurrencias, tiempo máximo de las recurrencias,etc. Y en 
-                                       la pestaña Gráfica MCF, puedes visualizar la estimación de la MCF (Mean Cumulative Function) 
-                                       para el conjunto de datos.")),
+                   tagAppendAttributes(`data-step` = 5, `data-intro` = "En la pestaña Resumen, podrás visualizar un resumen estadístico de la base de datos de eventos recurrentes, incluyendo el número de recurrencias, el tiempo mínimo y máximo de las recurrencias, etc.")),
         
         tabPanel("Gráfica MCF", 
                  plotOutput("mcf_plot", height = "600px")
       
-        )
+        ) %>%
+        tagAppendAttributes(`data-step` = 6, `data-intro` = "En la pestaña Gráfica MCF, podrás visualizar un gráfico para la estimación no paramétrica de la MCF (Mean Cumulative Function) para la base de datos seleccionada o cargada.")
       )
       
     )
-  ),
-  
-  # Marca de agua
-  tags$div(
-    style = "text-align: center; font-size: 13px; color: #888; margin-top: 40px; margin-bottom: 10px;",
-    "Creado por Grupo de investigación en Estadística, Universidad Nacional de Colombia - Sede Medellín"
+  # ),
+  # 
+  # # Marca de agua
+  # tags$div(
+  #   style = "text-align: center; font-size: 13px; color: #888; margin-top: 40px; margin-bottom: 10px;",
+  #   "Creado por Grupo de investigación en Estadística, Universidad Nacional de Colombia - Sede Medellín"
   )
 )
 
@@ -130,7 +137,7 @@ server <- function(input, output, session) {
     }
   })
   
-  # Actualización de columnas disponibles según dataset
+  # Actualización de variables disponibles según dataset
   observe({
     req(datos1())
     cols <- names(datos1())
@@ -139,23 +146,23 @@ server <- function(input, output, session) {
     updateSelectInput(session, "col_event1", choices = cols, selected = cols[3])
   })
   
-  # UI para columnas
+  # UI para variables
   output$col_id1 <- renderUI({
     req(datos1())
-    choices <- colnames(datos1())
-    selectInput("col_id1", "Columna ID:", choices = choices, selected = choices[1])
+    cols <- colnames(datos1())
+    selectInput("col_id1", "Variable ID:", choices = cols, selected = cols[1])
   })
   
   output$col_time1 <- renderUI({
     req(datos1())
-    choices <- colnames(datos1())
-    selectInput("col_time1", "Columna tiempo:", choices = choices, selected = choices[2])
+    cols <- colnames(datos1())
+    selectInput("col_time1", "Variable tiempo:", choices = cols, selected = cols[2])
   })
   
   output$col_event1 <- renderUI({
     req(datos1())
-    choices <- colnames(datos1())
-    selectInput("col_event1", "Columna tipo evento:", choices = choices, selected = choices[3])
+    cols <- colnames(datos1())
+    selectInput("col_event1", "Variable tipo evento:", choices = cols, selected = cols[3])
   })
   
   # Conversión a RDU
@@ -176,8 +183,7 @@ server <- function(input, output, session) {
   # Resumen del RDU
   output$summary_text <- renderPrint({ 
     req(rdu1())
-    cat("Resumen del dataset:\n")
-    print(summary(rdu1()))
+    summary(rdu1())
   })
 }
 
